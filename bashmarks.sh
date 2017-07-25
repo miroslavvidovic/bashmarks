@@ -36,7 +36,6 @@ fi
 touch $SDIRS
 
 RED="0;31m"
-GREEN="0;33m"
 
 # save current directory to bookmarks
 function bs {
@@ -93,17 +92,15 @@ function check_help {
     fi
 }
 
-# list bookmarks with dirnam
+# list bookmarks with directory name
 function bl {
     check_help "$1"
     source $SDIRS
 
     # if color output is not working for you, comment out the line below '\033[1;32m' == "red"
     env | sort | awk '/^DIR_.+/{split(substr($0,5),parts,"="); printf("\033[0;33m%-20s\033[0m %s\n", parts[1], parts[2]);}'
-
-    # uncomment this line if color output is not working with the line above
-    # env | grep "^DIR_" | cut -c5- | sort |grep "^.*="
 }
+
 # list bookmarks without dirname
 function _l {
     source $SDIRS
@@ -151,6 +148,19 @@ function _purge_line {
         /bin/rm -f -- "$t"
         trap - EXIT
     fi
+}
+
+# Fuzzy search for a bookmark with fzf
+function bf {
+    source $SDIRS
+
+    # First check if fzf is installed
+    hash fzf 2>/dev/null || { 
+       echo >&2 "Fzf required but it's not installed.  Aborting."; return 1; 
+    }
+
+    dir=$(env | sort | awk '/^DIR_.+/{split(substr($0,5),parts,"="); printf("%s\n", parts[2]);}' | fzf -m --reverse --margin 2%,2%,2%,2% )
+    cd "$dir"
 }
 
 # bind completion command for bg,bp,bd to _comp

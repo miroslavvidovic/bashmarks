@@ -14,6 +14,7 @@
     bp <bookmark_name> - Prints the directory associated with "bookmark_name"
     db <bookmark_name> - Deletes the bookmark
     bl                 - Lists all available bookmarks
+    bf                 - Fuzzy search for a bookmark
     
 ## Example Usage
 
@@ -28,3 +29,7 @@
 ## Where Bashmarks are stored
     
 All of your directory bookmarks are saved in a file called ".sdirs" in your HOME directory.
+
+## Requirements
+
+Fuzzy search option requires [fzf](https://github.com/junegunn/fzf)

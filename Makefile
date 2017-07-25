@@ -17,5 +17,6 @@ install:
 	@echo 'bp <bookmark_name> - Prints the directory associated with "bookmark_name"'
 	@echo 'bd <bookmark_name> - Deletes the bookmark'
 	@echo 'bl                 - Lists all available bookmarks'
+	@echo 'bf                 - Fuzzy search for a bookmark'
 
 .PHONY: all install
