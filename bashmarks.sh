@@ -5,11 +5,11 @@
 #   author:    Miroslav Vidovic
 #   file:      bashmarks.sh
 #   created:   18.07.2017.-17:32:33
-#   revision:  ---
-#   version:   1.0
+#   revision:  09.08.2017.
+#   version:   1.2
 # -----------------------------------------------------------------------------
 # Requirements:
-#
+#   fzf (https://github.com/junegunn/fzf) - for fuzzy search
 # Description:
 #   Directory bookmarking for the shell
 # Usage:
@@ -21,6 +21,7 @@
 #    bd bookmarkname - deletes the bookmark
 #    bd [TAB] - tab completion is available
 #    bl - list all bookmarks
+#    bf - fuzzy search bookmarks
 #
 # Credits:
 #   Original script by
@@ -38,19 +39,19 @@ touch $SDIRS
 RED="0;31m"
 
 # save current directory to bookmarks
-function bs {
-    check_help "$1"
+bs() {
+    _check_help "$1"
     _bookmark_name_valid "$@"
     if [ -z "$exit_message" ]; then
         _purge_line "$SDIRS" "export DIR_$1="
-        CURDIR=$(echo $PWD| sed "s#^$HOME#\$HOME#g")
+        CURDIR=$(echo "$PWD"| sed "s#^$HOME#\$HOME#g")
         echo "export DIR_$1=\"$CURDIR\"" >> $SDIRS
     fi
 }
 
-# jump to bookmark
-function bg {
-    check_help "$1"
+# go to bookmark
+bg() {
+    _check_help "$1"
     source $SDIRS
     target="$(eval $(echo echo $(echo \$DIR_$1)))"
     if [ -d "$target" ]; then
@@ -63,15 +64,15 @@ function bg {
 }
 
 # print bookmark
-function bp {
-    check_help "$1"
+bp() {
+    _check_help "$1"
     source $SDIRS
     echo "$(eval $(echo echo $(echo \$DIR_$1)))"
 }
 
 # delete bookmark
-function bd {
-    check_help "$1"
+bd() {
+    _check_help "$1"
     _bookmark_name_valid "$@"
     if [ -z "$exit_message" ]; then
         _purge_line "$SDIRS" "export DIR_$1="
@@ -80,7 +81,7 @@ function bd {
 }
 
 # print out help for the forgetful
-function check_help {
+_check_help() {
     if [ "$1" = "-h" ] || [ "$1" = "-help" ] || [ "$1" = "--help" ] ; then
         echo ''
         echo 'bs <bookmark_name> - Saves the current directory as "bookmark_name"'
@@ -88,13 +89,14 @@ function check_help {
         echo 'bp <bookmark_name> - Prints the directory associated with "bookmark_name"'
         echo 'bd <bookmark_name> - Deletes the bookmark'
         echo 'bl                 - Lists all available bookmarks'
+        echo 'bf                 - Fuzzy search bookmarks'
         kill -SIGINT $$
     fi
 }
 
 # list bookmarks with directory name
-function bl {
-    check_help "$1"
+bl() {
+    _check_help "$1"
     source $SDIRS
 
     # if color output is not working for you, comment out the line below '\033[1;32m' == "red"
@@ -102,13 +104,13 @@ function bl {
 }
 
 # list bookmarks without dirname
-function _l {
+_bl() {
     source $SDIRS
     env | grep "^DIR_" | cut -c5- | sort | grep "^.*=" | cut -f1 -d "="
 }
 
 # validate bookmark name
-function _bookmark_name_valid {
+_bookmark_name_valid() {
     exit_message=""
     if [ -z "$1" ]; then
         exit_message="bookmark name required"
@@ -120,21 +122,21 @@ function _bookmark_name_valid {
 }
 
 # completion command
-function _comp {
+_comp() {
     local curw
     COMPREPLY=()
     curw=${COMP_WORDS[COMP_CWORD]}
-    COMPREPLY=($(compgen -W '`_l`' -- $curw))
+    COMPREPLY=($(compgen -W '`_bl`' -- "$curw"))
     return 0
 }
 
 # ZSH completion command
-function _compzsh {
-    reply=($(_l))
+_compzsh() {
+    reply=($(_bl))
 }
 
 # safe delete line from sdirs
-function _purge_line {
+_purge_line() {
     if [ -s "$1" ]; then
         # safely create a temp file
         t=$(mktemp -t bashmarks.XXXXXX) || exit 1
@@ -151,12 +153,12 @@ function _purge_line {
 }
 
 # Fuzzy search for a bookmark with fzf
-function bf {
+bf() {
     source $SDIRS
 
     # First check if fzf is installed
-    hash fzf 2>/dev/null || { 
-       echo >&2 "Fzf required but it's not installed.  Aborting."; return 1; 
+    hash fzf 2>/dev/null || {
+       echo >&2 "Fzf required but it's not installed.  Aborting."; return 1;
     }
 
     dir=$(env | sort | awk '/^DIR_.+/{split(substr($0,5),parts,"="); printf("%s\n", parts[2]);}' | fzf -m --reverse --margin 2%,2%,2%,2% )
@@ -174,3 +176,6 @@ else
     complete -F _comp bp
     complete -F _comp bd
 fi
+
+# export aliases
+alias f="bf"
